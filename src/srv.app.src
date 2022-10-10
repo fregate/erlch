@@ -1,0 +1,9 @@
+{application, 'srv',
+ [{description, "simple chat server"}
+ , {vsn, "0.1.0"}
+ , {env,[]}
+ , {modules, []}
+ , {licenses, ["MIT"]}
+ , {applications, [kernel, stdlib]}
+ , {mod, {'srv_app', []}}
+ ]}.

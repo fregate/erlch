@@ -1,36 +1,36 @@
--module(srv).
+-module(srv_app).
+-behaviour(application).
+-export([start/2, stop/1, impl/1]).
 
 -include("common.hrl").
 
--export([start/1, stop/1, impl/2]).
+start(_StartType, _StartArgs) ->
+	register(msg_server, spawn(srv_app, impl, [[]])),
+	msg_server ! {start},
+	srv_sup:start_link().
 
-start(Token) ->
-	io:format("server private token for administration: ~p~n", [Token]),
-	register(msg_server, spawn(srv, impl, [Token, []])),
-	msg_server ! {start}.
-
-stop(Token) ->
-	msg_server ! {stop, Token},
+stop(_State) ->
+	msg_server ! {stop},
 	ok.
 
-impl(Token, Clients) ->
+impl(Clients) ->
 	receive
 		{start} ->
 			io:format("starting server... ~p~n", [self()]),
-			impl(Token, Clients);
+			impl(Clients);
 		{connect, ClientPID, Name} ->
 			UpdatedClients = connect(ClientPID, Name, Clients),
 			io:format("new connection, list of clients:~n~p~n", [UpdatedClients]),
-			impl(Token, UpdatedClients);
+			impl(UpdatedClients);
 		{disconnect, ClientPID} ->
 			io:format("disconnect client: ~p~n", [ClientPID]),
 			UpdatedClients = disconnect(ClientPID, Clients),
 			io:format("client disconnected, list of clients:~n~p~n", [UpdatedClients]),
-			impl(Token, UpdatedClients);
+			impl(UpdatedClients);
 		{list, ClientPID} ->
 			io:format("client request clients list~n"),
 			ClientPID ! {clients, Clients},
-			impl(Token, Clients);
+			impl(Clients);
 		{direct, FromPID, ToName, Message} ->
 			io:format("receive direct message~n"),
 			case lists:search(fun(C) ->
@@ -48,7 +48,7 @@ impl(Token, Clients) ->
 				false ->
 					send_error(FromPID, "Unknown sender!")
 			end,
-			impl(Token, Clients);
+			impl(Clients);
 		{all, FromPID, Message} ->
 			io:format("receive broadcast message~n"),
 			{value, From} = lists:search(fun(C) ->
@@ -56,14 +56,14 @@ impl(Token, Clients) ->
 			end,
 			Clients),
 			send_broadcast_message(From, Clients, Message),
-			impl(Token, Clients);
-		{stop, PrivateToken} when Token == PrivateToken ->
+			impl(Clients);
+		{stop} ->
 			io:format("stop server~n"),
 			send_broadcast_message(#client{name = "> Server <", pid = self()}, Clients, "Server is shuttings down..."),
 			ok;
 		_ ->
 			io:format("error: recieved unknown command"),
-			impl(Token, Clients)
+			impl(Clients)
 	after
 		600000 ->
 			io:format("timeout~n"),
