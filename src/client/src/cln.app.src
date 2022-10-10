@@ -1,0 +1,9 @@
+{application, 'cln',
+ [{description, "simple chat client"}
+ , {vsn, "0.1.0"}
+ , {env,[]}
+ , {modules, []}
+ , {licenses, ["MIT"]}
+ , {applications, [kernel, stdlib]}
+ , {mod, {'cln_app', []}}
+ ]}.

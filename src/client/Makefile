@@ -6,20 +6,14 @@ EBIN_DIR := $(CURDIR)/ebin
 
 REBAR3?=./rebar3
 
-all: srvd
+all: clnd
 
 clean:
 	$(REBAR3) clean
 	find . \( -name '*.beam' -or -name '*.o' -or -name 'erlcinfo' \) -delete
 
-srvd:
-	$(REBAR3) as server compile
+clnd:
+	$(REBAR3) as client compile
 
-srv:
-	$(REBAR3) as server release
-
-# clnd:
-# 	$(REBAR3) as clnd compile
-
-# cln:
-# 	$(REBAR3) as cln release
+clnd:
+	$(REBAR3) as client release
